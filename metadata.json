@@ -1,0 +1,6 @@
+{
+  "name": "LughatMate — Arabic–Urdu Learning Companion",
+  "description": "Native Arabic–Urdu learning companion for students and readers of classical Arabic. Offline dictionary, text study, flashcards, and library.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

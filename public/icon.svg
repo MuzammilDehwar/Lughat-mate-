@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#144234" />
+      <stop offset="50%" stop-color="#0E2D23" />
+      <stop offset="100%" stop-color="#091C16" />
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FDE047" />
+      <stop offset="50%" stop-color="#D97706" />
+      <stop offset="100%" stop-color="#B45309" />
+    </linearGradient>
+    <linearGradient id="pageGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FEFDF8" />
+      <stop offset="100%" stop-color="#F5EFE0" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.35" />
+    </filter>
+  </defs>
+
+  <!-- Background rounded squircle for Android adaptive / desktop -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)" />
+
+  <!-- Subtle Islamic geometric border circle -->
+  <circle cx="256" cy="256" r="218" fill="none" stroke="#D97706" stroke-width="2.5" stroke-opacity="0.3" stroke-dasharray="8 6" />
+  <circle cx="256" cy="256" r="206" fill="none" stroke="#FDE047" stroke-width="1.5" stroke-opacity="0.2" />
+
+  <!-- Open Book Emblem -->
+  <g filter="url(#shadow)" transform="translate(0, 10)">
+    <!-- Book Spine / base shadow -->
+    <path d="M 256 370 L 256 395" stroke="#78350F" stroke-width="8" stroke-linecap="round" />
+    
+    <!-- Left Page Outer Cover -->
+    <path d="M 256 370 C 210 350 140 348 96 360 L 96 195 C 144 185 210 188 256 210 Z" 
+          fill="#1A5342" stroke="url(#goldGrad)" stroke-width="3" />
+    <!-- Left Page Inner -->
+    <path d="M 252 360 C 210 342 144 340 106 350 L 106 190 C 148 180 210 182 252 202 Z" 
+          fill="url(#pageGrad)" />
+    <!-- Left Page Ruling Lines -->
+    <line x1="128" y1="230" x2="230" y2="238" stroke="#D1C7B7" stroke-width="2" stroke-linecap="round" />
+    <line x1="128" y1="260" x2="230" y2="268" stroke="#D1C7B7" stroke-width="2" stroke-linecap="round" />
+    <line x1="128" y1="290" x2="230" y2="298" stroke="#D1C7B7" stroke-width="2" stroke-linecap="round" />
+    <line x1="128" y1="320" x2="200" y2="326" stroke="#D1C7B7" stroke-width="2" stroke-linecap="round" />
+
+    <!-- Right Page Outer Cover -->
+    <path d="M 256 370 C 302 350 372 348 416 360 L 416 195 C 368 185 302 188 256 210 Z" 
+          fill="#1A5342" stroke="url(#goldGrad)" stroke-width="3" />
+    <!-- Right Page Inner -->
+    <path d="M 260 360 C 302 342 368 340 406 350 L 406 190 C 364 180 302 182 260 202 Z" 
+          fill="url(#pageGrad)" />
+
+    <!-- Central Arabic Calligraphic Letter "ل" (Laam) and "م" (Meem) for LughatMate -->
+    <!-- Beautiful classical Arabic Laam on right page -->
+    <text x="325" y="295" font-family="'Amiri', 'Traditional Arabic', serif" font-size="108" font-weight="bold" fill="#144234" text-anchor="middle">ل</text>
+
+    <!-- Golden bookmark ribbon hanging at center -->
+    <path d="M 250 205 L 262 205 L 260 415 L 256 405 L 252 415 Z" fill="url(#goldGrad)" />
+  </g>
+
+  <!-- Golden 8-pointed star crest at top -->
+  <g transform="translate(256, 115) scale(0.85)">
+    <polygon points="0,-22 6,-6 22,0 6,6 0,22 -6,6 -22,0 -6,-6" fill="url(#goldGrad)" />
+    <circle cx="0" cy="0" r="4" fill="#091C16" />
+  </g>
+</svg>
