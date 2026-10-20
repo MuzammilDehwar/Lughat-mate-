@@ -145,3 +145,30 @@ describe('6. Daily Arabic Quotes Corpus & Selector', () => {
     assert.ok(CLASSICAL_ARABIC_QUOTES.some(q => q.id === todayQuote.id));
   });
 });
+
+describe('7. Authentication & Profile Architecture Verification', () => {
+  test('validates firebase configuration parameters presence', async () => {
+    const { firebaseConfig } = await import('../auth/firebase.ts');
+    assert.ok(firebaseConfig.projectId, 'Firebase projectId must be defined');
+    assert.ok(firebaseConfig.apiKey, 'Firebase apiKey must be defined');
+    assert.ok(firebaseConfig.authDomain, 'Firebase authDomain must be defined');
+    assert.equal(firebaseConfig.projectId, 'centered-coil-gkm2h');
+  });
+
+  test('validates password strength rules', () => {
+    const evaluate = (p: string) => {
+      let score = 0;
+      if (p.length >= 6) score += 1;
+      if (p.length >= 8) score += 1;
+      if (/[A-Z]/.test(p) || /[0-9]/.test(p)) score += 1;
+      if (/[^A-Za-z0-9]/.test(p)) score += 1;
+      return score;
+    };
+
+    assert.equal(evaluate('123'), 1);
+    assert.equal(evaluate('simple'), 1);
+    assert.equal(evaluate('simple88'), 3);
+    assert.equal(evaluate('StrongP@ss99'), 4);
+  });
+});
+

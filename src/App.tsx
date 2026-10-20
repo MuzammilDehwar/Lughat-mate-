@@ -14,20 +14,25 @@ import { SettingsModal } from './components/SettingsModal';
 import { AndroidCodeExportModal } from './components/AndroidCodeExportModal';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { PWAInstallButton } from './components/PWAInstallButton';
+import { AuthModal, AuthModalView } from './components/auth/AuthModal';
+import { useAuth } from './auth/AuthContext';
 import { DictionaryItem } from './data/starterDictionary';
 import { getAppSettings, SavedPassageRecord } from './data/storage';
 import { 
   Home, Book, FileText, GraduationCap, Library, 
-  Settings, Smartphone, BookOpen 
+  Settings, Smartphone, BookOpen, User, LogIn 
 } from 'lucide-react';
 
 export default function App() {
+  const { currentUser } = useAuth();
   const [activeTab, setActiveTab] = useState<'home' | 'dictionary' | 'text_study' | 'practice' | 'library'>('home');
   const [dictionarySearchParam, setDictionarySearchParam] = useState<string>('');
   const [activeRootFilter, setActiveRootFilter] = useState<string | null>(null);
   const [selectedWord, setSelectedWord] = useState<DictionaryItem | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isAndroidExportOpen, setIsAndroidExportOpen] = useState(false);
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [authModalView, setAuthModalView] = useState<AuthModalView>('welcome');
   const [saveVersion, setSaveVersion] = useState(0);
 
   // Sync theme on mount
@@ -108,8 +113,41 @@ export default function App() {
             </div>
           </div>
 
-          {/* Right Action Icons: Offline status, PWA install, Android button, Settings */}
+          {/* Right Action Icons: User Auth, Offline status, PWA install, Android button, Settings */}
           <div className="flex items-center gap-2 sm:gap-3">
+            {/* Account / Profile Button */}
+            {currentUser && !currentUser.isGuest ? (
+              <button
+                onClick={() => {
+                  setAuthModalView('profile');
+                  setIsAuthOpen(true);
+                }}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-amber-400/20 hover:bg-amber-400/30 text-amber-200 border border-amber-400/40 text-xs font-urdu font-medium transition cursor-pointer"
+                title="طالب علم پروفائل و کلاؤڈ سنک"
+              >
+                <div className="w-5 h-5 rounded-full bg-[#133E33] text-amber-300 font-arabic text-[11px] font-bold flex items-center justify-center border border-amber-400/60 shadow-inner">
+                  {currentUser.displayName ? currentUser.displayName.slice(0, 1) : 'ط'}
+                </div>
+                <span className="hidden sm:inline font-urdu max-w-[80px] truncate">
+                  {currentUser.displayName || 'طالب علم'}
+                </span>
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  setAuthModalView('welcome');
+                  setIsAuthOpen(true);
+                }}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-emerald-900/90 hover:bg-emerald-800 text-stone-200 hover:text-white border border-emerald-700/70 text-xs font-urdu font-medium transition cursor-pointer"
+                title="طالب علم لاگ ان / نیا اکاؤنٹ"
+              >
+                <User className="w-4 h-4 text-amber-400" />
+                <span className="hidden sm:inline">
+                  {currentUser?.isGuest ? 'مہمان (Guest)' : 'لاگ ان'}
+                </span>
+              </button>
+            )}
+
             <OfflineIndicator />
             <PWAInstallButton variant="header" />
 
@@ -143,6 +181,10 @@ export default function App() {
             onOpenAndroidExport={() => setIsAndroidExportOpen(true)}
             saveVersion={saveVersion}
             onStudyQuote={handleStudyQuote}
+            onOpenAuth={(view) => {
+              setAuthModalView(view || 'welcome');
+              setIsAuthOpen(true);
+            }}
           />
         )}
 
@@ -231,12 +273,23 @@ export default function App() {
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
         onOpenAndroidExport={() => setIsAndroidExportOpen(true)}
+        onOpenAuth={(view) => {
+          setAuthModalView(view || 'welcome');
+          setIsAuthOpen(true);
+        }}
       />
 
       {/* Android Code & APK Export Modal */}
       <AndroidCodeExportModal
         isOpen={isAndroidExportOpen}
         onClose={() => setIsAndroidExportOpen(false)}
+      />
+
+      {/* Authentication & Profile Modal */}
+      <AuthModal
+        isOpen={isAuthOpen}
+        onClose={() => setIsAuthOpen(false)}
+        initialView={authModalView}
       />
     </div>
   );

@@ -13,21 +13,26 @@ import {
   Settings, X, Moon, Sun, Monitor, Type, 
   Volume2, ShieldCheck, Info, RotateCcw, 
   Trash2, Flag, Heart, Check, BookOpen, 
-  FileText, ExternalLink 
+  FileText, ExternalLink, User, Cloud 
 } from 'lucide-react';
+import { useAuth } from '../auth/AuthContext';
 
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   onOpenAndroidExport: () => void;
+  onOpenAuth?: (view?: 'welcome' | 'profile' | 'login') => void;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
   isOpen,
   onClose,
-  onOpenAndroidExport
+  onOpenAndroidExport,
+  onOpenAuth
 }) => {
   if (!isOpen) return null;
+
+  const { currentUser } = useAuth();
 
   const [settings, setSettings] = useState<AppSettings>(getAppSettings());
   const [activeSubTab, setActiveSubTab] = useState<'settings' | 'about' | 'privacy' | 'feedback'>('settings');
@@ -169,6 +174,34 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         <div className="p-6 max-h-[70vh] overflow-y-auto space-y-5">
           {activeSubTab === 'settings' && (
             <div className="space-y-5">
+              {/* Account & Profile Card */}
+              <div className="p-4 rounded-xl bg-amber-100/60 dark:bg-stone-800 border border-amber-200/80 dark:border-stone-700 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#133E33] text-amber-300 flex items-center justify-center font-arabic font-bold text-base border border-amber-400/40 shrink-0">
+                    {currentUser && !currentUser.isGuest ? (currentUser.displayName ? currentUser.displayName.slice(0, 1) : 'ط') : <User className="w-4 h-4 text-amber-400" />}
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold font-urdu text-stone-900 dark:text-stone-100">
+                      {currentUser && !currentUser.isGuest ? currentUser.displayName : 'مہمان موڈ (Guest)'}
+                    </h4>
+                    <p className="text-[11px] text-stone-500 font-urdu mt-0.5">
+                      {currentUser && !currentUser.isGuest ? (currentUser.email || 'کلاؤڈ اکاؤنٹ') : 'مقامی اسٹوریج میں فعال ہے'}
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    onOpenAuth?.(currentUser && !currentUser.isGuest ? 'profile' : 'welcome');
+                  }}
+                  className="px-3 py-1.5 rounded-lg bg-[#133E33] hover:bg-[#184d3f] text-amber-200 text-xs font-urdu font-medium transition cursor-pointer"
+                >
+                  {currentUser && !currentUser.isGuest ? 'پروفائل کھولیں' : 'اکاؤنٹ بنائیں / لاگ ان'}
+                </button>
+              </div>
+
               {/* Theme Selection */}
               <div>
                 <label className="text-xs font-bold text-stone-700 dark:text-stone-300 block mb-2">

@@ -1,0 +1,66 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile containing account details and learning preferences",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "The unique Firebase Auth UID" },
+        "displayName": { "type": "string", "maxLength": 100, "description": "User full name" },
+        "email": { "type": "string", "maxLength": 150, "description": "User email address" },
+        "learningGoal": { "type": "string", "maxLength": 100, "description": "Target educational focus" },
+        "createdAt": { "type": "string", "description": "ISO timestamp of registration" },
+        "lastLoginAt": { "type": "string", "description": "ISO timestamp of recent activity" },
+        "emailVerified": { "type": "boolean", "description": "Whether the user's email has been verified" }
+      },
+      "required": ["uid", "email", "displayName"]
+    },
+    "UserSavedWord": {
+      "title": "UserSavedWord",
+      "description": "A vocabulary word bookmarked by the user",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Client word record ID" },
+        "userId": { "type": "string", "description": "Owner user UID" },
+        "wordId": { "type": "string", "description": "Dictionary word reference ID" },
+        "arabic": { "type": "string", "maxLength": 200, "description": "Arabic vocalized text" },
+        "urdu": { "type": "string", "maxLength": 500, "description": "Urdu meaning" },
+        "root": { "type": "string", "maxLength": 50, "description": "Arabic tri-literal root" },
+        "personalNotes": { "type": "string", "maxLength": 2000, "description": "User study notes" },
+        "tag": { "type": "string", "maxLength": 50, "description": "Folder or tag" },
+        "dateAdded": { "type": "number", "description": "Timestamp in milliseconds" }
+      },
+      "required": ["id", "userId", "arabic", "urdu", "dateAdded"]
+    },
+    "UserSavedPassage": {
+      "title": "UserSavedPassage",
+      "description": "A study passage saved by the user with notes",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Passage unique ID" },
+        "userId": { "type": "string", "description": "Owner user UID" },
+        "title": { "type": "string", "maxLength": 200, "description": "Passage title" },
+        "arabicText": { "type": "string", "maxLength": 10000, "description": "Arabic passage text" },
+        "urduNotes": { "type": "string", "maxLength": 5000, "description": "Urdu translation and notes" },
+        "category": { "type": "string", "maxLength": 100, "description": "Category or topic" },
+        "dateSaved": { "type": "number", "description": "Timestamp in milliseconds" },
+        "bookmarked": { "type": "boolean", "description": "Favorite status" }
+      },
+      "required": ["id", "userId", "title", "arabicText", "dateSaved"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "UserProfile" },
+      "description": "Private user account profile and learning preferences"
+    },
+    "/users/{userId}/saved_words/{wordDocId}": {
+      "schema": { "$ref": "UserSavedWord" },
+      "description": "User synced vocabulary items"
+    },
+    "/users/{userId}/saved_passages/{passageDocId}": {
+      "schema": { "$ref": "UserSavedPassage" },
+      "description": "User synced classical study texts and notes"
+    }
+  }
+}

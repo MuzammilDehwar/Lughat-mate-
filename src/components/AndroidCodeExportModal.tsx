@@ -133,6 +133,36 @@ object ArabicNormalizer {
             .lowercase()
     }
 }`
+    },
+    {
+      name: 'AuthRepository.kt',
+      path: 'app/src/main/java/com/lughatmate/app/data/auth/AuthRepository.kt',
+      code: `package com.lughatmate.app.data.auth
+
+import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.tasks.await
+
+data class UserProfile(
+    val uid: String,
+    val email: String?,
+    val displayName: String?,
+    val isEmailVerified: Boolean,
+    val isGuest: Boolean = false
+)
+
+class AuthRepository(private val auth: FirebaseAuth = FirebaseAuth.getInstance()) {
+    suspend fun signInWithEmail(email: String, pass: String): Result<UserProfile> {
+        return try {
+            val res = auth.signInWithEmailAndPassword(email.trim(), pass).await()
+            val user = res.user!!
+            Result.success(UserProfile(user.uid, user.email, user.displayName ?: "طالب علم", user.isEmailVerified))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+}`
     }
   ];
 

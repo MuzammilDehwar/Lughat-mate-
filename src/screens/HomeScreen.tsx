@@ -18,6 +18,8 @@ import {
 } from 'lucide-react';
 
 import { DailyQuoteCard } from '../components/DailyQuoteCard';
+import { useAuth } from '../auth/AuthContext';
+import { User, LogIn, Cloud, ShieldAlert } from 'lucide-react';
 
 interface HomeScreenProps {
   onNavigate: (tab: 'home' | 'dictionary' | 'text_study' | 'practice' | 'library', searchParam?: string) => void;
@@ -25,6 +27,7 @@ interface HomeScreenProps {
   onOpenAndroidExport: () => void;
   saveVersion?: number;
   onStudyQuote?: (arabicText: string, title: string, urduNotes: string) => void;
+  onOpenAuth?: (view?: 'welcome' | 'login' | 'signup' | 'profile') => void;
 }
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({
@@ -32,8 +35,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   onOpenWord,
   onOpenAndroidExport,
   saveVersion = 0,
-  onStudyQuote
+  onStudyQuote,
+  onOpenAuth
 }) => {
+  const { currentUser } = useAuth();
   const [quickQuery, setQuickQuery] = useState('');
   const [savedWordsCount, setSavedWordsCount] = useState(0);
   const [practiceStats, setPracticeStats] = useState(getPracticeStats());
@@ -159,6 +164,84 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         {/* Subtle Decorative Geometry in background */}
         <div className="absolute -left-12 -bottom-12 w-64 h-64 rounded-full bg-emerald-700/10 blur-2xl pointer-events-none"></div>
         <div className="absolute -right-8 -top-8 w-48 h-48 rounded-full bg-amber-500/10 blur-xl pointer-events-none"></div>
+      </div>
+
+      {/* Student Account & Cloud Sync Status Banner */}
+      <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200/90 dark:border-stone-800 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        {currentUser && !currentUser.isGuest ? (
+          <div className="flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-2xl bg-[#133E33] text-amber-300 flex items-center justify-center font-arabic text-lg font-bold border border-amber-400/40 shadow-inner shrink-0">
+              {currentUser.displayName ? currentUser.displayName.slice(0, 1) : 'ط'}
+            </div>
+            <div className="text-right">
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-sm font-urdu text-stone-900 dark:text-stone-100">
+                  خوش آمدید، {currentUser.displayName || 'طالب علم'}!
+                </span>
+                {currentUser.emailVerified ? (
+                  <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 font-urdu">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                    تصدیق شدہ
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300 font-urdu">
+                    تصدیق زیر التواء
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-stone-500 font-urdu mt-0.5 flex items-center gap-1.5">
+                <Cloud className="w-3.5 h-3.5 text-emerald-600" />
+                <span>کلاؤڈ سنک فعال ہے • ہدف: {currentUser.learningGoal || 'عربی فہم و مطالعہ'}</span>
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-2xl bg-amber-100 dark:bg-stone-800 text-emerald-800 dark:text-amber-400 flex items-center justify-center border border-amber-200 dark:border-stone-700 shadow-sm shrink-0">
+              <User className="w-5 h-5" />
+            </div>
+            <div className="text-right">
+              <h4 className="font-bold text-sm font-urdu text-stone-900 dark:text-stone-100 flex items-center gap-1.5">
+                <span>طالب علم اکاؤنٹ اور کلاؤڈ سنک</span>
+                <span className="text-[10px] bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 px-2 py-0.5 rounded-full font-urdu">
+                  مفت و محفوظ
+                </span>
+              </h4>
+              <p className="text-xs text-stone-500 dark:text-stone-400 font-urdu mt-0.5">
+                اپنا اکاؤنٹ بنائیں تاکہ تمام محفوظ کردہ لغات، کلاسیکی متون اور نوٹس کلاؤڈ پر محفوظ رہیں۔
+              </p>
+            </div>
+          </div>
+        )}
+
+        <div className="flex items-center gap-2 self-end sm:self-center">
+          {currentUser && !currentUser.isGuest ? (
+            <button
+              onClick={() => onOpenAuth?.('profile')}
+              className="px-3.5 py-2 rounded-xl bg-[#133E33] hover:bg-[#184d3f] text-amber-200 font-urdu text-xs font-semibold shadow-sm transition flex items-center gap-1.5 cursor-pointer"
+            >
+              <User className="w-3.5 h-3.5 text-amber-400" />
+              <span>پروفائل و کلاؤڈ سنک</span>
+            </button>
+          ) : (
+            <>
+              <button
+                onClick={() => onOpenAuth?.('signup')}
+                className="px-3.5 py-2 rounded-xl bg-[#133E33] hover:bg-[#184d3f] text-amber-200 font-urdu text-xs font-semibold shadow-sm transition flex items-center gap-1.5 cursor-pointer"
+              >
+                <User className="w-3.5 h-3.5 text-amber-400" />
+                <span>نیا اکاؤنٹ بنائیں</span>
+              </button>
+              <button
+                onClick={() => onOpenAuth?.('login')}
+                className="px-3.5 py-2 rounded-xl bg-white dark:bg-stone-800 hover:bg-stone-50 text-stone-800 dark:text-stone-200 border border-stone-300 dark:border-stone-700 font-urdu text-xs font-medium shadow-sm transition flex items-center gap-1.5 cursor-pointer"
+              >
+                <LogIn className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />
+                <span>لاگ ان</span>
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Daily Vocabulary Card */}

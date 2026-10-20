@@ -1,0 +1,83 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null && request.auth.uid != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-\\.:]+$');
+    }
+
+    // User Profile Validation
+    function isValidUserProfile(data, userId) {
+      return data.keys().hasAll(['uid', 'email', 'displayName']) &&
+             data.uid == userId &&
+             data.uid == request.auth.uid &&
+             data.email is string && data.email.size() <= 150 &&
+             data.displayName is string && data.displayName.size() <= 100 &&
+             (!('learningGoal' in data) || (data.learningGoal is string && data.learningGoal.size() <= 100)) &&
+             (!('createdAt' in data) || (data.createdAt is string && data.createdAt.size() <= 50)) &&
+             (!('lastLoginAt' in data) || (data.lastLoginAt is string && data.lastLoginAt.size() <= 50)) &&
+             (!('emailVerified' in data) || (data.emailVerified is bool));
+    }
+
+    // Saved Word Validation
+    function isValidSavedWord(data, userId) {
+      return data.keys().hasAll(['id', 'userId', 'arabic', 'urdu', 'dateAdded']) &&
+             data.userId == userId &&
+             data.userId == request.auth.uid &&
+             data.id is string && data.id.size() <= 128 &&
+             data.arabic is string && data.arabic.size() <= 200 &&
+             data.urdu is string && data.urdu.size() <= 500 &&
+             data.dateAdded is number &&
+             (!('root' in data) || (data.root is string && data.root.size() <= 50)) &&
+             (!('personalNotes' in data) || (data.personalNotes is string && data.personalNotes.size() <= 2000)) &&
+             (!('tag' in data) || (data.tag is string && data.tag.size() <= 50)) &&
+             (!('wordId' in data) || (data.wordId is string && data.wordId.size() <= 100));
+    }
+
+    // Saved Passage Validation
+    function isValidSavedPassage(data, userId) {
+      return data.keys().hasAll(['id', 'userId', 'title', 'arabicText', 'dateSaved']) &&
+             data.userId == userId &&
+             data.userId == request.auth.uid &&
+             data.id is string && data.id.size() <= 128 &&
+             data.title is string && data.title.size() <= 200 &&
+             data.arabicText is string && data.arabicText.size() <= 10000 &&
+             data.dateSaved is number &&
+             (!('urduNotes' in data) || (data.urduNotes is string && data.urduNotes.size() <= 5000)) &&
+             (!('category' in data) || (data.category is string && data.category.size() <= 100)) &&
+             (!('bookmarked' in data) || (data.bookmarked is bool));
+    }
+
+    match /users/{userId} {
+      allow get: if isOwner(userId) && isValidId(userId);
+      allow list: if false; // No enumeration of users
+      allow create: if isOwner(userId) && isValidId(userId) && isValidUserProfile(request.resource.data, userId);
+      allow update: if isOwner(userId) && isValidId(userId) && isValidUserProfile(request.resource.data, userId);
+      allow delete: if isOwner(userId) && isValidId(userId);
+
+      match /saved_words/{wordDocId} {
+        allow get: if isOwner(userId) && isValidId(userId) && isValidId(wordDocId);
+        allow list: if isOwner(userId) && isValidId(userId);
+        allow create: if isOwner(userId) && isValidId(userId) && isValidId(wordDocId) && isValidSavedWord(request.resource.data, userId);
+        allow update: if isOwner(userId) && isValidId(userId) && isValidId(wordDocId) && isValidSavedWord(request.resource.data, userId);
+        allow delete: if isOwner(userId) && isValidId(userId) && isValidId(wordDocId);
+      }
+
+      match /saved_passages/{passageDocId} {
+        allow get: if isOwner(userId) && isValidId(userId) && isValidId(passageDocId);
+        allow list: if isOwner(userId) && isValidId(userId);
+        allow create: if isOwner(userId) && isValidId(userId) && isValidId(passageDocId) && isValidSavedPassage(request.resource.data, userId);
+        allow update: if isOwner(userId) && isValidId(userId) && isValidId(passageDocId) && isValidSavedPassage(request.resource.data, userId);
+        allow delete: if isOwner(userId) && isValidId(userId) && isValidId(passageDocId);
+      }
+    }
+  }
+}
