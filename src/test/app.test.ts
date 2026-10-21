@@ -152,7 +152,35 @@ describe('7. Authentication & Profile Architecture Verification', () => {
     assert.ok(firebaseConfig.projectId, 'Firebase projectId must be defined');
     assert.ok(firebaseConfig.apiKey, 'Firebase apiKey must be defined');
     assert.ok(firebaseConfig.authDomain, 'Firebase authDomain must be defined');
-    assert.equal(firebaseConfig.projectId, 'centered-coil-gkm2h');
+    assert.equal(firebaseConfig.projectId, 'lughat-mate');
+    assert.equal(firebaseConfig.authDomain, 'lughat-mate.firebaseapp.com');
+  });
+
+  test('validates provider-specific readable auth error messages', async () => {
+    const { getReadableAuthError } = await import('../auth/AuthContext.tsx');
+    
+    // Email disabled / configuration not found
+    const emailConfigErr = getReadableAuthError({ code: 'auth/configuration-not-found' }, 'email');
+    assert.ok(emailConfigErr.includes('Email/Password'));
+    assert.ok(emailConfigErr.includes('lughat-mate'));
+
+    // Google disabled / configuration not found
+    const googleConfigErr = getReadableAuthError({ code: 'auth/configuration-not-found' }, 'google');
+    assert.ok(googleConfigErr.includes('Google'));
+    assert.ok(googleConfigErr.includes('lughat-mate'));
+
+    // Facebook disabled / configuration not found
+    const fbConfigErr = getReadableAuthError({ code: 'auth/configuration-not-found' }, 'facebook');
+    assert.ok(fbConfigErr.includes('Facebook'));
+    assert.ok(fbConfigErr.includes('lughat-mate'));
+
+    // Operation not allowed
+    const opErr = getReadableAuthError({ code: 'auth/operation-not-allowed' }, 'google');
+    assert.ok(opErr.includes('Google'));
+
+    // Invalid credentials
+    const credErr = getReadableAuthError({ code: 'auth/invalid-credential' });
+    assert.ok(credErr.includes('ای میل یا پاس ورڈ'));
   });
 
   test('validates password strength rules', () => {

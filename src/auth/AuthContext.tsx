@@ -1,7 +1,7 @@
 /**
  * Authentication Context for LughatMate
- * Supports Firebase Auth (Email/Password, Google Sign-In, Email Verification, Password Reset)
- * with graceful offline and guest mode support.
+ * Supports Firebase Auth (Email/Password, Google Sign-In, Facebook Login, Email Verification, Password Reset)
+ * with graceful offline and guest mode support, and human-readable provider-specific error handling.
  */
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
@@ -17,11 +17,11 @@ import {
   updateProfile,
   deleteUser,
   setPersistence,
-  browserLocalPersistence,
+  browserLocalPersistence, 
   browserSessionPersistence
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, updateDoc, deleteDoc } from 'firebase/firestore';
-import { auth, db, googleProvider } from './firebase';
+import { auth, db, googleProvider, facebookProvider } from './firebase';
 
 export interface UserProfileData {
   uid: string;
@@ -35,6 +35,85 @@ export interface UserProfileData {
   isGuest: boolean;
 }
 
+export function getReadableAuthError(err: any, provider: 'email' | 'google' | 'facebook' | 'general' = 'general'): string {
+  if (!err) return 'نامعلوم خرابی پیش آئی۔ (Unknown error occurred)';
+  const code = typeof err === 'string' ? err : err.code || '';
+  const rawMsg = err.message || '';
+
+  // Check for configuration not found or disabled provider in Firebase project
+  if (code === 'auth/configuration-not-found' || rawMsg.includes('CONFIGURATION_NOT_FOUND')) {
+    if (provider === 'email') {
+      return 'فائر بیس پراجیکٹ (lughat-mate) میں Email/Password سائن ان ابھی فعال نہیں ہے۔ Firebase Console > Authentication > Sign-in method سے اسے فعال (Enable) کریں۔';
+    }
+    if (provider === 'google') {
+      return 'فائر بیس پراجیکٹ (lughat-mate) میں Google Sign-In ابھی فعال نہیں ہے۔ Firebase Console میں Google Provider کو آن کریں۔';
+    }
+    if (provider === 'facebook') {
+      return 'فائر بیس پراجیکٹ (lughat-mate) میں Facebook Login ابھی فعال نہیں ہے۔ Firebase Console میں Facebook App ID اور App Secret شامل کر کے اسے فعال کریں۔';
+    }
+    return 'اس فائر بیس پروجیکٹ میں مطلوبہ Authentication سروس فعال نہیں ہے۔ Firebase Console سے تصدیق کریں۔';
+  }
+
+  if (code === 'auth/operation-not-allowed') {
+    if (provider === 'email') {
+      return 'ای میل اور پاس ورڈ کا طریقہ کار فائر بیس کنسول میں غیر فعال (Disabled) ہے۔ براہ کرم Sign-in method سے اسے فعال کریں۔';
+    }
+    if (provider === 'google') {
+      return 'گوگل سائن ان فائر بیس کنسول میں غیر فعال ہے۔ براہ کرم Firebase Console سے Google Provider فعال کریں۔';
+    }
+    if (provider === 'facebook') {
+      return 'فیس بک سائن ان فائر بیس کنسول میں غیر فعال ہے۔ براہ کرم Firebase Console سے Facebook Provider فعال کریں۔';
+    }
+    return 'یہ سائن ان ذریعہ فائر بیس کنسول میں فعال نہیں ہے۔';
+  }
+
+  if (code === 'auth/unauthorized-domain') {
+    return 'یہ ویب سائٹ فائر بیس کی مجاز فہرست (Authorized Domains) میں شامل نہیں ہے۔ براہ کرم Firebase Console > Authentication > Settings میں یہ ڈومین شامل کریں۔';
+  }
+
+  if (code === 'auth/invalid-credential' || code === 'auth/user-not-found' || code === 'auth/wrong-password') {
+    return 'ای میل یا پاس ورڈ درست نہیں ہے۔ براہ کرم درست معلومات درج کریں۔';
+  }
+
+  if (code === 'auth/email-already-in-use') {
+    return 'اس ای میل پر پہلے سے ایک اکاؤنٹ موجود ہے۔ براہ کرم سائن ان کریں۔';
+  }
+
+  if (code === 'auth/weak-password') {
+    return 'پاس ورڈ کم از کم 6 حروف پر مشتمل اور مضبوط ہونا چاہیے۔';
+  }
+
+  if (code === 'auth/invalid-email') {
+    return 'درج کردہ ای میل ایڈریس کا فارمیٹ درست نہیں ہے۔';
+  }
+
+  if (code === 'auth/popup-closed-by-user') {
+    return 'لاگ ان ونڈو صارف کی جانب سے بند کر دی گئی تھی۔';
+  }
+
+  if (code === 'auth/popup-blocked') {
+    return 'براؤزر نے پاپ اپ بلاک کر دیا۔ براہ کرم ایڈریس بار سے پاپ اپ کی اجازت دیں۔';
+  }
+
+  if (code === 'auth/network-request-failed') {
+    return 'انٹرنیٹ کنکشن کا مسئلہ ہے یا نیٹ ورک دستیاب نہیں ہے۔ آپ آف لائن موڈ میں بلا رکاوٹ مطالعہ جاری رکھ سکتے ہیں۔';
+  }
+
+  if (code === 'auth/too-many-requests') {
+    return 'سیکیورٹی کی خاطر عارضی رکاوٹ: بہت زیادہ کوششیں کی گئی ہیں۔ براہ کرم چند منٹ بعد دوبارہ کوشش کریں۔';
+  }
+
+  if (code === 'auth/account-exists-with-different-credential') {
+    return 'اس ای میل کے ساتھ کسی دوسرے ذریعے (مثلاً گوگل یا فیس بک) سے پہلے اکاؤنٹ موجود ہے۔ براہ کرم اسی ذریعے سے سائن ان کریں۔';
+  }
+
+  if (code === 'auth/requires-recent-login') {
+    return 'حفاظتی وجوہات کی بنا پر اس حساس عمل سے قبل دوبارہ لاگ ان ہونا ضروری ہے۔';
+  }
+
+  return `لاگ ان میں مسئلہ پیش آیا (${code || 'Error'}): ${rawMsg || 'براہ کرم دوبارہ کوشش کریں'}`;
+}
+
 interface AuthContextType {
   currentUser: UserProfileData | null;
   rawFirebaseUser: FirebaseUser | null;
@@ -43,6 +122,7 @@ interface AuthContextType {
   signInWithEmail: (email: string, pass: string, rememberMe?: boolean) => Promise<{ success: boolean; error?: string }>;
   signUpWithEmail: (email: string, pass: string, fullName: string, goal?: string) => Promise<{ success: boolean; error?: string }>;
   signInWithGoogle: () => Promise<{ success: boolean; error?: string }>;
+  signInWithFacebook: () => Promise<{ success: boolean; error?: string }>;
   sendPasswordReset: (email: string) => Promise<{ success: boolean; error?: string }>;
   resendVerification: () => Promise<{ success: boolean; error?: string }>;
   refreshVerificationStatus: () => Promise<boolean>;
@@ -186,16 +266,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await syncProfile(userCred.user);
       return { success: true };
     } catch (err: any) {
-      let message = 'لاگ ان کرنے میں مسئلہ پیش آیا۔ براہ کرم دوبارہ کوشش کریں۔';
-      if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
-        message = 'ای میل یا پاس ورڈ غلط ہے۔ براہ کرم درست معلومات درج کریں۔';
-      } else if (err.code === 'auth/too-many-requests') {
-        message = 'کئی غلط کوششیں ہو چکی ہیں۔ سیکیورٹی کی خاطر کچھ دیر بعد کوشش کریں۔';
-      } else if (err.code === 'auth/invalid-email') {
-        message = 'درج کردہ ای میل کا فارمیٹ درست نہیں ہے۔';
-      } else if (err.code === 'auth/network-request-failed') {
-        message = 'انٹرنیٹ کنکشن دستیاب نہیں ہے۔ آف لائن موڈ میں جاری رکھیں۔';
-      }
+      const message = getReadableAuthError(err, 'email');
       return { success: false, error: message };
     }
   };
@@ -237,14 +308,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await syncProfile(userCred.user);
       return { success: true };
     } catch (err: any) {
-      let message = 'اکاؤنٹ بنانے میں رکاوٹ آئی۔ براہ کرم دوبارہ کوشش کریں۔';
-      if (err.code === 'auth/email-already-in-use') {
-        message = 'اس ای میل پر پہلے سے ایک اکاؤنٹ موجود ہے۔ براہ کرم لاگ ان کریں۔';
-      } else if (err.code === 'auth/weak-password') {
-        message = 'پاس ورڈ کم از کم 6 حروف کا اور محفوظ ہونا چاہیے۔';
-      } else if (err.code === 'auth/invalid-email') {
-        message = 'ای میل کا فارمیٹ غلط ہے۔';
-      }
+      const message = getReadableAuthError(err, 'email');
       return { success: false, error: message };
     }
   };
@@ -257,12 +321,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await syncProfile(result.user);
       return { success: true };
     } catch (err: any) {
-      let message = 'گوگل سے لاگ ان مکمل نہیں ہو سکا۔';
-      if (err.code === 'auth/popup-closed-by-user') {
-        message = 'گوگل سائن ان ونڈو بند کر دی گئی تھی۔';
-      } else if (err.code === 'auth/popup-blocked') {
-        message = 'براؤزر نے پاپ اپ بلاک کر دیا۔ براہ کرم پاپ اپس کی اجازت دیں۔';
-      }
+      const message = getReadableAuthError(err, 'google');
+      return { success: false, error: message };
+    }
+  };
+
+  const signInWithFacebook = async () => {
+    try {
+      const result = await signInWithPopup(auth, facebookProvider);
+      setIsGuest(false);
+      localStorage.removeItem(GUEST_STORAGE_KEY);
+      await syncProfile(result.user);
+      return { success: true };
+    } catch (err: any) {
+      const message = getReadableAuthError(err, 'facebook');
       return { success: false, error: message };
     }
   };
@@ -272,13 +344,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await sendPasswordResetEmail(auth, email.trim());
       return { success: true };
     } catch (err: any) {
-      // In production security, we do not reveal if the email exists or not, but handle rate limits
+      // In production security, we do not reveal if the email exists or not, but handle rate limits & config errors
       if (err.code === 'auth/too-many-requests') {
         return { success: false, error: 'بہت زیادہ درخواستیں بھیجی جا چکی ہیں۔ براہ کرم کچھ منٹ انتظار کریں۔' };
       } else if (err.code === 'auth/invalid-email') {
         return { success: false, error: 'درج کردہ ای میل درست نہیں ہے۔' };
+      } else if (err.code === 'auth/configuration-not-found' || (err.message && err.message.includes('CONFIGURATION_NOT_FOUND'))) {
+        return { success: false, error: 'فائر بیس پراجیکٹ میں پاس ورڈ ری سیٹ کنفیگریشن فعال نہیں ہے۔ Firebase Console سے جانچیں۔' };
       }
-      // For general cases, return success or a neutral message so email enumeration is mitigated
+      // For general cases, return success so email enumeration is mitigated
       return { success: true };
     }
   };
@@ -294,7 +368,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (err.code === 'auth/too-many-requests') {
         return { success: false, error: 'تصدیقی ای میل بھیجنے کی حد پوری ہو گئی ہے۔ تھوڑی دیر بعد کوشش کریں۔' };
       }
-      return { success: false, error: 'تصدیقی ای میل بھیجنے میں مسئلہ آیا۔' };
+      return { success: false, error: getReadableAuthError(err, 'email') };
     }
   };
 
@@ -388,7 +462,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           error: 'سیکیورٹی کی وجہ سے اکاؤنٹ حذف کرنے سے پہلے دوبارہ لاگ ان ہونا ضروری ہے۔ براہ کرم لاگ آؤٹ کر کے دوبارہ لاگ ان کریں۔' 
         };
       }
-      return { success: false, error: 'اکاؤنٹ حذف نہیں ہو سکا۔ دوبارہ کوشش کریں۔' };
+      return { success: false, error: getReadableAuthError(err, 'general') };
     }
   };
 
@@ -402,6 +476,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         signInWithEmail,
         signUpWithEmail,
         signInWithGoogle,
+        signInWithFacebook,
         sendPasswordReset,
         resendVerification,
         refreshVerificationStatus,

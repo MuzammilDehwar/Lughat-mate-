@@ -1,12 +1,9 @@
 {
-  "projectId": "centered-coil-gkm2h",
-  "appId": "1:616336483108:web:cdbf81b4f4ce9e4ab649b1",
-  "apiKey": "AIzaSyBFw-Qzm2acDlyYWlg3hHBERonntWoptkU",
-  "authDomain": "centered-coil-gkm2h.firebaseapp.com",
-  "firestoreDatabaseId": "ai-studio-lughatmatearabic-bccc3a1d-ac9c-4809-94c9-6d2ffc92623b",
-  "storageBucket": "centered-coil-gkm2h.firebasestorage.app",
-  "messagingSenderId": "616336483108",
-  "measurementId": "",
-  "oAuthClientId": "616336483108-2f2lm223aui1kga87fvn068d3v2jeb6b.apps.googleusercontent.com",
-  "recaptchaSiteKey": ""
+  "apiKey": "AIzaSyDM-_JMfv1BBD-4QUsYzLrhzjSOCcLSCK8",
+  "authDomain": "lughat-mate.firebaseapp.com",
+  "projectId": "lughat-mate",
+  "storageBucket": "lughat-mate.firebasestorage.app",
+  "messagingSenderId": "1020643044096",
+  "appId": "1:1020643044096:web:3e6857ca9a0d6b19b921e5",
+  "measurementId": "G-HTH12RKFW5"
 }
